@@ -22,6 +22,8 @@ type ContentServiceClient interface {
 	CampaignDealGetMultiple(ctx context.Context, in *CampaignDealGetMultipleRequest, opts ...grpc.CallOption) (ContentService_CampaignDealGetMultipleClient, error)
 	CampaignDealCreate(ctx context.Context, in *CampaignDealCreateRequest, opts ...grpc.CallOption) (*CampaignDealCreateResponse, error)
 	CampaignDealUpdate(ctx context.Context, in *CampaignDealUpdateRequest, opts ...grpc.CallOption) (*CampaignDealUpdateResponse, error)
+	BlogGetList(ctx context.Context, in *BlogGetListRequest, opts ...grpc.CallOption) (ContentService_BlogGetListClient, error)
+	BlogGetOne(ctx context.Context, in *BlogGetOneRequest, opts ...grpc.CallOption) (*BlogGetOneResponse, error)
 }
 
 type contentServiceClient struct {
@@ -91,6 +93,47 @@ func (c *contentServiceClient) CampaignDealUpdate(ctx context.Context, in *Campa
 	return out, nil
 }
 
+func (c *contentServiceClient) BlogGetList(ctx context.Context, in *BlogGetListRequest, opts ...grpc.CallOption) (ContentService_BlogGetListClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ContentService_ServiceDesc.Streams[1], "/contents.v1.ContentService/BlogGetList", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &contentServiceBlogGetListClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type ContentService_BlogGetListClient interface {
+	Recv() (*BlogGetListResponseStream, error)
+	grpc.ClientStream
+}
+
+type contentServiceBlogGetListClient struct {
+	grpc.ClientStream
+}
+
+func (x *contentServiceBlogGetListClient) Recv() (*BlogGetListResponseStream, error) {
+	m := new(BlogGetListResponseStream)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *contentServiceClient) BlogGetOne(ctx context.Context, in *BlogGetOneRequest, opts ...grpc.CallOption) (*BlogGetOneResponse, error) {
+	out := new(BlogGetOneResponse)
+	err := c.cc.Invoke(ctx, "/contents.v1.ContentService/BlogGetOne", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ContentServiceServer is the server API for ContentService service.
 // All implementations must embed UnimplementedContentServiceServer
 // for forward compatibility
@@ -99,6 +142,8 @@ type ContentServiceServer interface {
 	CampaignDealGetMultiple(*CampaignDealGetMultipleRequest, ContentService_CampaignDealGetMultipleServer) error
 	CampaignDealCreate(context.Context, *CampaignDealCreateRequest) (*CampaignDealCreateResponse, error)
 	CampaignDealUpdate(context.Context, *CampaignDealUpdateRequest) (*CampaignDealUpdateResponse, error)
+	BlogGetList(*BlogGetListRequest, ContentService_BlogGetListServer) error
+	BlogGetOne(context.Context, *BlogGetOneRequest) (*BlogGetOneResponse, error)
 	mustEmbedUnimplementedContentServiceServer()
 }
 
@@ -117,6 +162,12 @@ func (UnimplementedContentServiceServer) CampaignDealCreate(context.Context, *Ca
 }
 func (UnimplementedContentServiceServer) CampaignDealUpdate(context.Context, *CampaignDealUpdateRequest) (*CampaignDealUpdateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CampaignDealUpdate not implemented")
+}
+func (UnimplementedContentServiceServer) BlogGetList(*BlogGetListRequest, ContentService_BlogGetListServer) error {
+	return status.Errorf(codes.Unimplemented, "method BlogGetList not implemented")
+}
+func (UnimplementedContentServiceServer) BlogGetOne(context.Context, *BlogGetOneRequest) (*BlogGetOneResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BlogGetOne not implemented")
 }
 func (UnimplementedContentServiceServer) mustEmbedUnimplementedContentServiceServer() {}
 
@@ -206,6 +257,45 @@ func _ContentService_CampaignDealUpdate_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ContentService_BlogGetList_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(BlogGetListRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ContentServiceServer).BlogGetList(m, &contentServiceBlogGetListServer{stream})
+}
+
+type ContentService_BlogGetListServer interface {
+	Send(*BlogGetListResponseStream) error
+	grpc.ServerStream
+}
+
+type contentServiceBlogGetListServer struct {
+	grpc.ServerStream
+}
+
+func (x *contentServiceBlogGetListServer) Send(m *BlogGetListResponseStream) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _ContentService_BlogGetOne_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BlogGetOneRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServiceServer).BlogGetOne(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/contents.v1.ContentService/BlogGetOne",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServiceServer).BlogGetOne(ctx, req.(*BlogGetOneRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ContentService_ServiceDesc is the grpc.ServiceDesc for ContentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -225,11 +315,20 @@ var ContentService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "CampaignDealUpdate",
 			Handler:    _ContentService_CampaignDealUpdate_Handler,
 		},
+		{
+			MethodName: "BlogGetOne",
+			Handler:    _ContentService_BlogGetOne_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "CampaignDealGetMultiple",
 			Handler:       _ContentService_CampaignDealGetMultiple_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "BlogGetList",
+			Handler:       _ContentService_BlogGetList_Handler,
 			ServerStreams: true,
 		},
 	},
