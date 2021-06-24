@@ -24,6 +24,7 @@ type ContentServiceClient interface {
 	CampaignDealUpdate(ctx context.Context, in *CampaignDealUpdateRequest, opts ...grpc.CallOption) (*CampaignDealUpdateResponse, error)
 	BlogGetList(ctx context.Context, in *BlogGetListRequest, opts ...grpc.CallOption) (ContentService_BlogGetListClient, error)
 	BlogGetOne(ctx context.Context, in *BlogGetOneRequest, opts ...grpc.CallOption) (*BlogGetOneResponse, error)
+	BlogSetLovelist(ctx context.Context, in *BlogSetLovelistRequest, opts ...grpc.CallOption) (*BlogSetLovelistResponse, error)
 }
 
 type contentServiceClient struct {
@@ -134,6 +135,15 @@ func (c *contentServiceClient) BlogGetOne(ctx context.Context, in *BlogGetOneReq
 	return out, nil
 }
 
+func (c *contentServiceClient) BlogSetLovelist(ctx context.Context, in *BlogSetLovelistRequest, opts ...grpc.CallOption) (*BlogSetLovelistResponse, error) {
+	out := new(BlogSetLovelistResponse)
+	err := c.cc.Invoke(ctx, "/contents.v1.ContentService/BlogSetLovelist", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ContentServiceServer is the server API for ContentService service.
 // All implementations must embed UnimplementedContentServiceServer
 // for forward compatibility
@@ -144,6 +154,7 @@ type ContentServiceServer interface {
 	CampaignDealUpdate(context.Context, *CampaignDealUpdateRequest) (*CampaignDealUpdateResponse, error)
 	BlogGetList(*BlogGetListRequest, ContentService_BlogGetListServer) error
 	BlogGetOne(context.Context, *BlogGetOneRequest) (*BlogGetOneResponse, error)
+	BlogSetLovelist(context.Context, *BlogSetLovelistRequest) (*BlogSetLovelistResponse, error)
 	mustEmbedUnimplementedContentServiceServer()
 }
 
@@ -168,6 +179,9 @@ func (UnimplementedContentServiceServer) BlogGetList(*BlogGetListRequest, Conten
 }
 func (UnimplementedContentServiceServer) BlogGetOne(context.Context, *BlogGetOneRequest) (*BlogGetOneResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BlogGetOne not implemented")
+}
+func (UnimplementedContentServiceServer) BlogSetLovelist(context.Context, *BlogSetLovelistRequest) (*BlogSetLovelistResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BlogSetLovelist not implemented")
 }
 func (UnimplementedContentServiceServer) mustEmbedUnimplementedContentServiceServer() {}
 
@@ -296,6 +310,24 @@ func _ContentService_BlogGetOne_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ContentService_BlogSetLovelist_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BlogSetLovelistRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServiceServer).BlogSetLovelist(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/contents.v1.ContentService/BlogSetLovelist",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServiceServer).BlogSetLovelist(ctx, req.(*BlogSetLovelistRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ContentService_ServiceDesc is the grpc.ServiceDesc for ContentService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -318,6 +350,10 @@ var ContentService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BlogGetOne",
 			Handler:    _ContentService_BlogGetOne_Handler,
+		},
+		{
+			MethodName: "BlogSetLovelist",
+			Handler:    _ContentService_BlogSetLovelist_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
